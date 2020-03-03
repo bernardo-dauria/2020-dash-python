@@ -6,6 +6,20 @@ import dash_bootstrap_components as dbc # import the library
 import dash_core_components as dcc
 import dash_html_components as html
 
+import pandas as pd
+df = pd.read_csv('https://forge.scilab.org/index.php/p/rdataset/source/file/master/csv/ggplot2/msleep.csv')
+
+def generate_table(dataframe, max_rows=10):
+    return html.Table(
+        # Header
+        [html.Tr([html.Th(col) for col in dataframe.columns])] +
+
+        # Body
+        [html.Tr(
+            [html.Td(row[col]) for col in row.index.values]
+        ) for index, row in dataframe.head(max_rows).iterrows()]
+    )
+
 
 #load the app with the Bootstrap css theme
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])  
@@ -48,8 +62,9 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
                                 }
                                 }
                     }
-            )
+            ),
+            generate_table(df)
         ])
 
 if __name__ == '__main__':
-    app.run_server(port=5051, debug=True) # debug=True to enable hot reload
+    app.run_server(port=5050, debug=True) # debug=True to enable hot reload
