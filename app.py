@@ -10,6 +10,7 @@ import plotly.graph_objs as go
 from dash.dependencies import Input, Output, State
 
 import pandas as pd
+import json
 db_url = 'https://forge.scilab.org/index.php/p/rdataset/source/file/master/csv/ggplot2/msleep.csv'
 db = pd.read_csv(db_url)
 db_vore = db['vore'].dropna().sort_values().unique()
@@ -55,11 +56,7 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
                     }),
             dcc.Markdown(markdown_text),
             
-            html.Div(id='my-div',
-             style={
-                 'background' : 'yellow',
-                 'color' : 'blue'
-             }),
+            html.Div(id='my-div', style={'display': 'none'}),
     
             dcc.Graph(id='my-graph'),
             dcc.Graph(id='my-box-plot'),
@@ -133,24 +130,27 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
                 
 @app.callback(
     Output('my-div', 'children'),
-    [Input('my-dropdown', 'value')]
-)
-def update_output_div(input_value):
-    return 'You\'ve entered "{}"'.format(input_value)
-
-@app.callback(
-    [Output('my-graph', 'figure'),
-     Output('my-box-plot', 'figure'),],
-    [Input('my-multi-dropdown', 'value'), 
-     Input('my-button', 'n_clicks')],
-    [State('my-slider', 'value')]
-)
-def update_output_graph(input_value, n_clicks, slider_range):
+    [Input('my-button', 'n_clicks')],
+    [State('my-slider', 'value')])
+def update_data(n_clicks, slider_range):
     if (slider_range and len(slider_range) == 2):
         l, h = slider_range
     else :
         l, h = min(db['sleep_total']), max(db['sleep_total']);
-    df = db[db['sleep_total'].between(l,h)]
+    df = db[db['sleep_total'].between(l,h)].to_json(orient='split', date_format='iso')
+    return json.dumps(df)
+
+@app.callback(
+    [Output('my-graph', 'figure'),
+     Output('my-box-plot', 'figure'),],
+    [Input('my-div', 'children'),
+     Input('my-multi-dropdown', 'value')]
+)
+def update_output_graph(data, input_value):
+    if data is None:
+        return {}, {}
+    dataset = json.loads(data)
+    df = pd.read_json(dataset, orient='split')
     return  {
                 'data': [
                     go.Scatter(
@@ -207,4 +207,4 @@ def update_slider(input_value):
 if __name__ == '__main__':
     # app.server.logger.setLevel(logging.DEBUG)
     # app.server.logger.debug("debug-message")
-    app.run_server(port=5057, debug=True) # debug=True to enable hot reload
+    app.run_server(port=5058, debug=True) # debug=True to enable hot reload
