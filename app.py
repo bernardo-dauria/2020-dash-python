@@ -139,16 +139,17 @@ def update_output_graph(data, input_value):
 )
 def update_output_boxplot(data, input_value):
     if data is None or input_value is None:
-        return {}
+        return {'data':[], 'layout':[]}
+    
     dataset = json.loads(data)
     data_filtered = pd.read_json(dataset, orient='split')
-    return {
-               'data': [go.Box(
+    return {            'data': [go.Box(
                    y=data_filtered[data_filtered['vore'] == i]['sleep_total'],
                    name=i + 'vore'
-               ) if i in input_value else []
-                        for i in df_vore]
-           }
+               ) if i in input_value else {}
+                        for i in df_vore],
+                   'layout': {}
+            }
 
 
 @app.callback(
