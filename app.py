@@ -61,6 +61,7 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
              }),
     
             dcc.Graph(id='my-graph'),
+            dcc.Graph(id='my-box-plot'),
             
             # generate_table(df)
             
@@ -123,7 +124,8 @@ def update_output_div(input_value):
     return 'You\'ve entered "{}"'.format(input_value)
 
 @app.callback(
-    Output('my-graph', 'figure'),
+    [Output('my-graph', 'figure'),
+     Output('my-box-plot', 'figure'),],
     [Input('my-multi-dropdown', 'value')]
 )
 def update_output_graph(input_value):
@@ -149,7 +151,12 @@ def update_output_graph(input_value):
                     legend={'x': 0, 'y': 1},
                     hovermode='closest'
                 )
+            },{
+                'data': [ go.Box(
+                            y= df[df['vore'] == i]['sleep_total'],
+                            name= i + 'vore'
+                        ) if i in input_value else {}
+                          for i in df_vore ]
             }
-
 if __name__ == '__main__':
-    app.run_server(port=5054, debug=True) # debug=True to enable hot reload
+    app.run_server(port=5055, debug=True) # debug=True to enable hot reload
