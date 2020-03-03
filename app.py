@@ -11,6 +11,11 @@ import dash_html_components as html
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])  
 app.title = 'My First Dash App'
 
+colors = {
+    'background': '#111111',
+    'text': '#7FDBFF'
+}
+
 markdown_text = '''
 #### Some references
 
@@ -20,17 +25,31 @@ markdown_text = '''
 
 '''
 
-app.layout = html.Div([
-            html.H1('Hello Dash'),
+app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': colors['text']}, children=[
+            html.H1('Hello Dash', style={
+                    'textAlig':"center",
+                    'color': colors['text']
+                    }),
             dcc.Markdown(markdown_text),
+            html.Div(children='Dash: A web application framework for Python.', style={
+                'textAlign': 'center',
+                'color': colors['text']
+            }),
             dcc.Graph(id="example-graph",
                       figure={"data":[
                               {"x":[1,2,3], "y":[4,2,1], "type": "bar", "name": "DF"},
                               {"x":[1,2,3], "y":[2,4,5], "type": "bar", "name": u'Montréal'}
-                              ]
-                      }
+                              ],
+                              'layout': {
+                                'plot_bgcolor': colors['background'],
+                                'paper_bgcolor': colors['background'],
+                                'font': {
+                                    'color': colors['text']
+                                }
+                                }
+                    }
             )
         ])
 
 if __name__ == '__main__':
-    app.run_server(debug=True) # debug=True to enable hot reload
+    app.run_server(port=5051, debug=True) # debug=True to enable hot reload
