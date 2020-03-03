@@ -1,4 +1,5 @@
 import dash
+import logging
 
 # install Bootstrap for Dash
 # conda install -c conda-forge dash-bootstrap-components
@@ -169,5 +170,31 @@ def update_output_graph(input_value, slider_range):
                         ) if i in input_value else {}
                           for i in db_vore ]
             }
+                
+@app.callback(
+    [Output('my-slider', 'min'), 
+     Output('my-slider', 'max'), 
+     Output('my-slider', 'value'), 
+     Output('my-slider', 'marks')],
+    [Input('my-multi-dropdown', 'value')]
+)
+def update_slider(input_value):
+    def round(x):
+        return int(x) if x % 0.1 < 0.1 else x
+    
+    s = pd.Series(input_value, name='vore')
+    data = db[db.vore.isin(s)]['sleep_total'] 
+    
+    min = round(data.min())
+    max = round(data.max())
+    mean = round(data.mean())
+    low = round((min + mean)/2)
+    high = round((max + mean) / 2)
+    marks = {min: {'label': str(min), 'style': {'color': '#77b0b1'}},
+             max: {'label': str(max), 'style': {'color': '#77b0b1'}}}
+    return min, max,  [low, high], marks 
+
 if __name__ == '__main__':
+    # app.server.logger.setLevel(logging.DEBUG)
+    # app.server.logger.debug("debug-message")
     app.run_server(port=5057, debug=True) # debug=True to enable hot reload
