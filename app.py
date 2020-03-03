@@ -59,6 +59,8 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
                  'background' : 'yellow',
                  'color' : 'blue'
              }),
+    
+            dcc.Graph(id='my-graph'),
             
             # generate_table(df)
             
@@ -69,15 +71,12 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
                         options=opt_vore,
                         value=df_vore[0]
                 ),
-            
+                
                 html.Label('Multi-Select Dropdown'),
                 dcc.Dropdown(
-                    options=[
-                        {'label': 'New York City', 'value': 'NYC'},
-                        {'label': u'Montréal', 'value': 'MTL'},
-                        {'label': 'San Francisco', 'value': 'SF'}
-                    ],
-                    value=['MTL', 'SF'],
+                    id='my-multi-dropdown',
+                    options=opt_vore,
+                    value=df_vore[0],
                     multi=True
                 ),
             
@@ -117,11 +116,40 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
         ])
                 
 @app.callback(
-    Output(component_id='my-div', component_property='children'),
-    [Input(component_id='my-dropdown', component_property='value')]
+    Output('my-div', 'children'),
+    [Input('my-dropdown', 'value')]
 )
 def update_output_div(input_value):
     return 'You\'ve entered "{}"'.format(input_value)
 
+@app.callback(
+    Output('my-graph', 'figure'),
+    [Input('my-multi-dropdown', 'value')]
+)
+def update_output_graph(input_value):
+    return  {
+                'data': [
+                    go.Scatter(
+                        x=df[df['vore'] == i]['bodywt'] if i in input_value else [],
+                        y=df[df['vore'] == i]['sleep_total'] if i in input_value else [],
+                        text=df[df['vore'] == i]['name'],
+                        mode='markers',
+                        opacity=0.7,
+                        marker={
+                            'size': 15,
+                            'line': {'width': 0.5, 'color': 'white'}
+                        },
+                        name=i
+                    ) for i in df_vore
+                ],
+                'layout': go.Layout(
+                    xaxis={'type': 'log', 'title': 'Body weight (kg)'},
+                    yaxis={'title': 'Total daily sleep time (hr)'},
+                    margin={'l': 40, 'b': 40, 't': 10, 'r': 10},
+                    legend={'x': 0, 'y': 1},
+                    hovermode='closest'
+                )
+            }
+
 if __name__ == '__main__':
-    app.run_server(port=5053, debug=True) # debug=True to enable hot reload
+    app.run_server(port=5054, debug=True) # debug=True to enable hot reload
