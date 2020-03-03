@@ -6,14 +6,13 @@ import dash_bootstrap_components as dbc # import the library
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
+from dash.dependencies import Input, Output
 
 import pandas as pd
-# df = pd.read_csv('https://forge.scilab.org/index.php/p/rdataset/source/file/master/csv/ggplot2/msleep.csv')
-df = pd.read_csv(
-    'https://gist.githubusercontent.com/chriddyp/' +
-    '5d1ea79569ed194d432e56108a04d188/raw/' +
-    'a9f9e8076b837d541398e999dcbac2b2826a81f8/'+
-    'gdp-life-exp-2007.csv')
+df_url = 'https://forge.scilab.org/index.php/p/rdataset/source/file/master/csv/ggplot2/msleep.csv'
+df = pd.read_csv(df_url)
+df_vore = df['vore'].dropna().sort_values().unique()
+opt_vore = [{'label': x + 'vore', 'value': x} for x in df_vore]
 
 def generate_table(dataframe, max_rows=10):
     return html.Table(
@@ -54,49 +53,21 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
                     'color': colors['text']
                     }),
             dcc.Markdown(markdown_text),
-            html.Div(children='Dash: A web application framework for Python.', style={
-                'textAlign': 'center',
-                'color': colors['text']
-            }),
-    
-            dcc.Graph(
-                id='life-exp-vs-gdp',
-                figure={
-                    'data': [
-                        go.Scatter(
-                            x=df[df['continent'] == i]['gdp per capita'],
-                            y=df[df['continent'] == i]['life expectancy'],
-                            text=df[df['continent'] == i]['country'],
-                            mode='markers',
-                            opacity=0.7,
-                            marker={
-                                'size': 15,
-                                'line': {'width': 0.5, 'color': 'white'}
-                            },
-                            name=i
-                        ) for i in df.continent.unique()
-                    ],
-                    'layout': go.Layout(
-                        xaxis={'type': 'log', 'title': 'GDP Per Capita'},
-                        yaxis={'title': 'Life Expectancy'},
-                        margin={'l': 40, 'b': 40, 't': 10, 'r': 10},
-                        legend={'x': 0, 'y': 1},
-                        hovermode='closest'
-                    )
-                }
-            ),
+            
+            html.Div(id='my-div',
+             style={
+                 'background' : 'yellow',
+                 'color' : 'blue'
+             }),
             
             # generate_table(df)
             
             html.Div([
                 html.Label('Dropdown'),
                 dcc.Dropdown(
-                    options=[
-                        {'label': 'New York City', 'value': 'NYC'},
-                        {'label': u'Montréal', 'value': 'MTL'},
-                        {'label': 'San Francisco', 'value': 'SF'}
-                    ],
-                    value='MTL'
+                        id='my-dropdown',
+                        options=opt_vore,
+                        value=df_vore[0]
                 ),
             
                 html.Label('Multi-Select Dropdown'),
@@ -144,6 +115,13 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
     
         
         ])
+                
+@app.callback(
+    Output(component_id='my-div', component_property='children'),
+    [Input(component_id='my-dropdown', component_property='value')]
+)
+def update_output_div(input_value):
+    return 'You\'ve entered "{}"'.format(input_value)
 
 if __name__ == '__main__':
-    app.run_server(port=5050, debug=True) # debug=True to enable hot reload
+    app.run_server(port=5053, debug=True) # debug=True to enable hot reload
