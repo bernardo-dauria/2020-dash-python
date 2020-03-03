@@ -9,10 +9,10 @@ import plotly.graph_objs as go
 from dash.dependencies import Input, Output
 
 import pandas as pd
-df_url = 'https://forge.scilab.org/index.php/p/rdataset/source/file/master/csv/ggplot2/msleep.csv'
-df = pd.read_csv(df_url)
-df_vore = df['vore'].dropna().sort_values().unique()
-opt_vore = [{'label': x + 'vore', 'value': x} for x in df_vore]
+db_url = 'https://forge.scilab.org/index.php/p/rdataset/source/file/master/csv/ggplot2/msleep.csv'
+db = pd.read_csv(db_url)
+db_vore = db['vore'].dropna().sort_values().unique()
+opt_vore = [{'label': x + 'vore', 'value': x} for x in db_vore]
 
 def generate_table(dataframe, max_rows=10):
     return html.Table(
@@ -63,21 +63,21 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
             dcc.Graph(id='my-graph'),
             dcc.Graph(id='my-box-plot'),
             
-            # generate_table(df)
+            # generate_table(db)
             
             html.Div([
                 html.Label('Dropdown'),
                 dcc.Dropdown(
                         id='my-dropdown',
                         options=opt_vore,
-                        value=df_vore[0]
+                        value=db_vore[0]
                 ),
                 
                 html.Label('Multi-Select Dropdown'),
                 dcc.Dropdown(
                     id='my-multi-dropdown',
                     options=opt_vore,
-                    value=df_vore[0],
+                    value=db_vore[0],
                     multi=True
                 ),
             
@@ -105,11 +105,16 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
                 dcc.Input(value='MTL', type='text'),
             
                 html.Label('Slider'),
-                dcc.Slider(
-                    min=0,
-                    max=9,
-                    marks={i: 'Label {}'.format(i) if i == 1 else str(i) for i in range(1, 6)},
-                    value=5,
+                html.Div(
+                    dcc.RangeSlider(
+                        id='my-slider',
+                        step=0.1,
+                        min=min(db['sleep_total']),
+                        max=max(db['sleep_total'])
+                    ),
+                    style={
+                        'margin': '10%'
+                    }
                 ),
             ], style={'columnCount': 2})
     
@@ -126,9 +131,15 @@ def update_output_div(input_value):
 @app.callback(
     [Output('my-graph', 'figure'),
      Output('my-box-plot', 'figure'),],
-    [Input('my-multi-dropdown', 'value')]
+    [Input('my-multi-dropdown', 'value'), 
+     Input('my-slider', 'value')]
 )
-def update_output_graph(input_value):
+def update_output_graph(input_value, slider_range):
+    if (slider_range and len(slider_range) == 2):
+        l, h = slider_range
+    else :
+        l, h = min(db['sleep_total']), max(db['sleep_total']);
+    df = db[db['sleep_total'].between(l,h)]
     return  {
                 'data': [
                     go.Scatter(
@@ -142,7 +153,7 @@ def update_output_graph(input_value):
                             'line': {'width': 0.5, 'color': 'white'}
                         },
                         name=i
-                    ) for i in df_vore
+                    ) for i in db_vore
                 ],
                 'layout': go.Layout(
                     xaxis={'type': 'log', 'title': 'Body weight (kg)'},
@@ -156,7 +167,7 @@ def update_output_graph(input_value):
                             y= df[df['vore'] == i]['sleep_total'],
                             name= i + 'vore'
                         ) if i in input_value else {}
-                          for i in df_vore ]
+                          for i in db_vore ]
             }
 if __name__ == '__main__':
-    app.run_server(port=5055, debug=True) # debug=True to enable hot reload
+    app.run_server(port=5057, debug=True) # debug=True to enable hot reload
