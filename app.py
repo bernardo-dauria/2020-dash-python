@@ -6,6 +6,7 @@ import logging
 import dash_bootstrap_components as dbc # import the library
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_table
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output, State
 
@@ -29,14 +30,14 @@ def generate_table(dataframe, max_rows=10):
 
 
 #load the app with the Bootstrap css theme
-#external_stylesheets = [dbc.themes.BOOTSTRAP]
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+external_stylesheets = [dbc.themes.BOOTSTRAP]
+#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
     
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)  
 app.title = 'My First Dash App'
 
 colors = {
-    'background': '#111111',
+    'background': 'white',
     'text': '#7FDBFF'
 }
 
@@ -63,69 +64,41 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
             
             # generate_table(db)
             
-            html.Div([
-                html.Label('Dropdown'),
-                dcc.Dropdown(
-                        id='my-dropdown',
-                        options=opt_vore,
-                        value=db_vore[0]
-                ),
+            html.Label('Dropdown'),
+            dcc.Dropdown(
+                    id='my-dropdown',
+                    options=opt_vore,
+                    value=db_vore[0]
+            ),
                 
+            dbc.FormGroup([
                 html.Label('Multi-Select Dropdown'),
                 dcc.Dropdown(
                     id='my-multi-dropdown',
                     options=opt_vore,
                     value=db_vore[0],
                     multi=True
-                ),
+                )
+            ]),
             
-                html.Label('Radio Items'),
-                dcc.RadioItems(
-                    options=[
-                        {'label': 'New York City', 'value': 'NYC'},
-                        {'label': u'Montréal', 'value': 'MTL'},
-                        {'label': 'San Francisco', 'value': 'SF'}
-                    ],
-                    value='MTL'
+            dbc.FormGroup([
+                html.Label('Slider'),
+                dcc.RangeSlider(
+                    id='my-slider',
+                    step=0.1,
+                    min=min(db['sleep_total']),
+                    max=max(db['sleep_total'])
                 ),
-            
-                html.Label('Checkboxes'),
-                dcc.Checklist(
-                    options=[
-                        {'label': 'New York City', 'value': 'NYC'},
-                        {'label': u'Montréal', 'value': 'MTL'},
-                        {'label': 'San Francisco', 'value': 'SF'}
-                    ],
-                    value=['MTL', 'SF']
-                ),
-            
-                html.Label('Text Input'),
-                dcc.Input(value='MTL', type='text'),
-            
-                html.Div([
-                    html.Label('Slider'),
-                    html.Div(
-                        dcc.RangeSlider(
-                            id='my-slider',
-                            step=0.1,
-                            min=min(db['sleep_total']),
-                            max=max(db['sleep_total'])
-                        ),
-                        style={
-                            'width': '60%',
-                            'display': 'inline-block',
-                            'paddingLeft': '10%',
-                            'paddingRight': '10%'
-                        }
-                    ),
-                    html.Button('Update filter', id='my-button')
-                ],
-                    style={
-                        'marginTop': '5%',
-                        'marginBottom': '5%'
-                    }
-                ),
-            ], style={'columnCount': 2})    
+                dbc.Button('Update filter', 
+                           color="warning", 
+                           className="mr-1",
+                           id='my-button'),
+            ]),
+                
+            dash_table.DataTable(
+                id='my-table',
+                columns=[{"name": i, "id": i} for i in db.columns]
+            )
         ])
                 
 @app.callback(
@@ -171,7 +144,8 @@ def update_output_graph(data, input_value):
                     yaxis={'title': 'Total daily sleep time (hr)'},
                     margin={'l': 40, 'b': 40, 't': 10, 'r': 10},
                     legend={'x': 0, 'y': 1},
-                    hovermode='closest'
+                    hovermode='closest',
+                    dragmode='lasso'
                 )
             },{
                 'data': [ go.Box(
@@ -204,7 +178,21 @@ def update_slider(input_value):
              max: {'label': str(max), 'style': {'color': '#77b0b1'}}}
     return min, max,  [low, high], marks 
 
+@app.callback(
+    Output('my-table', 'data'),
+    [Input('my-graph', 'selectedData')])
+def display_selected_data(selected_data):
+    if selected_data is None or len(selected_data) == 0:
+        return []
+
+    points = selected_data['points']
+    if len(points) == 0:
+        return []
+
+    names = [x['text'] for x in points]
+    return db[db['name'].isin(names)].to_dict("rows")
+
 if __name__ == '__main__':
     # app.server.logger.setLevel(logging.DEBUG)
     # app.server.logger.debug("debug-message")
-    app.run_server(port=5058, debug=True) # debug=True to enable hot reload
+    app.run_server(port=5062, debug=True) # debug=True to enable hot reload
