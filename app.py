@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc # import the library
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 
 import pandas as pd
 db_url = 'https://forge.scilab.org/index.php/p/rdataset/source/file/master/csv/ggplot2/msleep.csv'
@@ -105,21 +105,30 @@ app.layout = html.Div(style={"backgroundColor": colors['background'], 'color': c
                 html.Label('Text Input'),
                 dcc.Input(value='MTL', type='text'),
             
-                html.Label('Slider'),
-                html.Div(
-                    dcc.RangeSlider(
-                        id='my-slider',
-                        step=0.1,
-                        min=min(db['sleep_total']),
-                        max=max(db['sleep_total'])
+                html.Div([
+                    html.Label('Slider'),
+                    html.Div(
+                        dcc.RangeSlider(
+                            id='my-slider',
+                            step=0.1,
+                            min=min(db['sleep_total']),
+                            max=max(db['sleep_total'])
+                        ),
+                        style={
+                            'width': '60%',
+                            'display': 'inline-block',
+                            'paddingLeft': '10%',
+                            'paddingRight': '10%'
+                        }
                     ),
+                    html.Button('Update filter', id='my-button')
+                ],
                     style={
-                        'margin': '10%'
+                        'marginTop': '5%',
+                        'marginBottom': '5%'
                     }
                 ),
-            ], style={'columnCount': 2})
-    
-        
+            ], style={'columnCount': 2})    
         ])
                 
 @app.callback(
@@ -133,9 +142,10 @@ def update_output_div(input_value):
     [Output('my-graph', 'figure'),
      Output('my-box-plot', 'figure'),],
     [Input('my-multi-dropdown', 'value'), 
-     Input('my-slider', 'value')]
+     Input('my-button', 'n_clicks')],
+    [State('my-slider', 'value')]
 )
-def update_output_graph(input_value, slider_range):
+def update_output_graph(input_value, n_clicks, slider_range):
     if (slider_range and len(slider_range) == 2):
         l, h = slider_range
     else :
