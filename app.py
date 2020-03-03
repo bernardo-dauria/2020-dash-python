@@ -21,8 +21,15 @@ markdown_text = '''
 '''
 
 app.layout = html.Div([
-        html.H1('Hello Dash'),
-        dcc.Markdown(markdown_text)
+            html.H1('Hello Dash'),
+            dcc.Markdown(markdown_text),
+            dcc.Graph(id="example-graph",
+                      figure={"data":[
+                              {"x":[1,2,3], "y":[4,2,1], "type": "bar", "name": "DF"},
+                              {"x":[1,2,3], "y":[2,4,5], "type": "bar", "name": u'Montréal'}
+                              ]
+                      }
+            )
         ])
 
 if __name__ == '__main__':
